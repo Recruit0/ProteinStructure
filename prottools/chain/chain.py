@@ -24,7 +24,7 @@ class Chain:
   
   def add_bond( node_a, node_b ):
     new_bond = Bond( node_a.idlabel, node_b.idlabel )
-    
+    # BOOKMARK 24.4.2011
     # Inserting same bonds/atoms shouldn't matter at this point
     self.bonds[ new_bond.node_ids ] = new_bond
     # Insert nodes from bond into self.atoms

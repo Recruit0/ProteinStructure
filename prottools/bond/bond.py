@@ -14,6 +14,7 @@ class Bond:
     self.x = node_list[ 1 ].x - node_list[ 0 ].x
     self.y = node_list[ 1 ].y - node_list[ 0 ].y
     self.z = node_list[ 1 ].z - node_list[ 0 ].z
+    # BOOKMARK 24.4.2011
 
     # Connecting requires having a list of all the atoms, hence
     # connecting should be handled by the Chain class
