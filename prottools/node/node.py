@@ -13,13 +13,12 @@ class Node:
     # prevent nodes from connecting to nodes not in the same chain
     self.neighbors = Set() if neighbors is None else neighbors
   
-  # Connect function should not exist here, connecting requires having
-  # a list of all the nodes, hence connecting should be handled by
-  # the Chain class in order to prevent duplicate nodes/etc
+  # Connecting requires having a list of all the atoms, hence
+  # connecting should be handled by the Chain class
   # Analogy to graph theory: the Graph (Chain) should connect the dots
 
 #if __name__ == '__main__':
-if False:
+if False: # Pythonic way of commenting out lots of lines of code
   print __package__
   import string, random
 

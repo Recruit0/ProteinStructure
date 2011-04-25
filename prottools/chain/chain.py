@@ -1,6 +1,8 @@
 ## @package prottools
 # @TODO: needs full header
 
+from sets import Set
+
 class Chain:
   def __init__( self, name = '' ):
     self.name = name
@@ -8,7 +10,9 @@ class Chain:
     self.atoms = {}
     
   ## Makes tuple of nodes become neighbors
-  # Using simpler algo.
+  # Each id in node_ids must exist in self.atoms
+  # Not sure this should be public function or just stick in add_bond()
+  # Using simpler algo. Potentially uses more memory.
   # More optimal algo of O( n^2 / 2 ) is not as readable.
   def connect( self, node_ids ):
     for node_id in node_ids:
@@ -18,18 +22,13 @@ class Chain:
       # Make sure nodes don't have themselves as a neighbor
       atoms[ node_id ].neighbors.remove[ node_id ]
   
-  def add_bond( bond ):
-    node_ids = ( bond.nodes[ 0 ].idlabel, bond.nodes[ 1 ].idlabel )
-    # Fix bond so same atom won't be added more than once
-    # Bonds should point to atoms in self.atoms if they already exist
-    for i in range( 0, len( node_ids ) ):
-      if node_ids[ i ] in self.atoms:
-        bond.nodes[ i ] = self.atoms[ node_ids[ i ] ]
+  def add_bond( node_a, node_b ):
+    new_bond = Bond( node_a.idlabel, node_b.idlabel )
     
     # Inserting same bonds/atoms shouldn't matter at this point
-    self.bonds[ node_ids ] = bond
+    self.bonds[ new_bond.node_ids ] = new_bond
     # Insert nodes from bond into self.atoms
-    self.atoms[ node_ids[ 0 ] ] = bond.nodes[ 0 ]
+    self.atoms[ node_ids[ 0 ] ] = node_a
     self.atoms[ node_ids[ 1 ] ] = bond.nodes[ 1 ]
     # Connect nodes in the bond to each other
     connect( node_ids )
