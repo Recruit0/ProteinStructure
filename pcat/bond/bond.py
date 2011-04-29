@@ -1,12 +1,14 @@
 ## @package prottools
 # @TODO: needs full header
 
+from operator import itemgetter, attrgetter
+
 # @author Alvin Fagan
 
 class Bond:
   def __init__( self, node_a, node_b ):
     # Store list sorted by id so that one pair has one key
-    self.nodes = sorted ( [ node_a, node_b ] )
+    self.nodes = sorted ( [ node_a, node_b ], key=attrgetter('idlabel') )
     # Should not connect at this point, connecting requires having
     # a list of all the atoms, hence connecting should be handled by
     # the Chain class
@@ -19,12 +21,13 @@ if __name__ == '__main__':
       self.x = x
       self.y = y
   
-  point1 = Point( 'AB12', 1.0, 2.0 )
-  point2 = Point( 'CD34', 3.0, 4.0 )
-  unsorted_points = [ point2, point1 ]
+  point1 = Point( 'CD34', 1.0, 2.0 )
+  point2 = Point( 'AB12', 3.0, 4.0 )
+  
+  unsorted_points = [ point1, point2 ]
   for point in unsorted_points:
     print point.idlabel
-  points = sorted( unsorted_points )
+  points = sorted( unsorted_points, key=attrgetter('idlabel') )
   for point in points:
     print point.idlabel, point.x, point.y
   
