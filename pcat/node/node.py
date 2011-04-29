@@ -4,23 +4,41 @@
 # @author Alvin Fagan
 
 from sets import Set
+from visual import *
+import math
 
-class Node:
+class Node( vector ):
   def __init__( self, idlabel = '', x = 0.0, y = 0.0, z = 0.0, neighbors = None ):
     self.idlabel = idlabel
-    self.x = x
-    self.y = y
-    self.z = z
+    # Might need this later: speed, floating point accuracy
+    # Use a tuple to prevent changing values
+    self.original = ( x, y, z )
+    # Use vpython's vector class
+    # Although a vector is an ordered pair of points I'm using it this
+    # way due to time constraints
+    super( Derived, self ).__init__( x, y, z )
     # Make neighbors as set of string ids rather than actual nodes to
     # prevent nodes from connecting to nodes not in the same chain
     self.neighbors = Set() if neighbors is None else neighbors
   
-  # Connect function should not exist here, connecting requires having
-  # a list of all the nodes, hence connecting should be handled by
-  # the Chain class in order to prevent duplicate nodes/etc
-  # Analogy to graph theory: the Graph (Chain) should connect the dots
+  # Any connecting should be encapsulated within Chain class for safety
 
-#if __name__ == '__main__':
+if __name__ == '__main__':
+  # Trying to figure out how to rotate vector into xy plane
+  vec = []
+  vec.append( vector( 1, 0, 0 ) )
+  vec.append( vector( -2, 2, 3 ) )
+  vec.append( vec[ 0 ].cross( vec[ 1 ] ) )
+  vec.append( vec[ 0 ].cross( vec[ 2 ] ) )
+  vec.append( degrees( vec[ 0 ].diff_angle( vec[ 2 ] ) ) ) #5
+  # Vectors 0, 2 and 3 are 90 degs to each other
+  vec.append( degrees( vec[ 3 ].diff_angle( vec[ 2 ] ) ) )
+  vec.append( degrees( vec[ 0 ].diff_angle( vec[ 1 ] ) ) )
+  #vec.append( vec[ 1 ].rotate( vec[ 
+  
+  for v in vec:
+    print v
+
 if False:
   print __package__
   import string, random
