@@ -17,8 +17,8 @@ class Node( vector ):
     # Although a vector is an ordered pair of points I'm using it this
     # way due to time constraints
     super( Derived, self ).__init__( x, y, z )
-    # Make neighbors as set of string ids rather than actual nodes to
-    # prevent nodes from connecting to nodes not in the same chain
+    # Tries to prevent from pointing to atoms not in the atoms
+    # dictionary of the chain but this might be too strict
     self.neighbors = Set() if neighbors is None else neighbors
   
   # Any connecting should be encapsulated within Chain class for safety

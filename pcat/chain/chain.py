@@ -6,9 +6,10 @@
 
 from visual import * 
 import math
+from operator import itemgetter, attrgetter
 
 ## Returns if a list of chains has a magnitude with max d_r error
-#
+# Obselete?
 def has_mag( chains, mag, d_r = 1.0 ):
   all_match = True
   for chain in chains:
@@ -16,6 +17,27 @@ def has_mag( chains, mag, d_r = 1.0 ):
     # Optimize this later to do binary search or something
     for bond in chain.bonds:
       if abs( bond.magnitude - mag ) <= d_r:
+        # Found a match
+        match_found = True
+        break
+    if not match_found:
+      # No match in one of the chains means no match in all
+      all_match = False
+      break
+  return all_match
+
+## Returns if list of chains have a specified atom with max epsilon
+## error in distance.
+# @param epsilon Max difference in position
+# @param position This must be a vpython vector
+def has_atom( chains, position, epsilon = 1.0 ):
+  all_match = True
+  for chain in chains:
+    match_found = False
+    # Optimize this later to do binary search or something
+    for atom in chain.atoms:
+      # Figure out how to make this a parameter
+      if mag2( atom - position ) <= epsilon**2:
         # Found a match
         match_found = True
         break
@@ -65,6 +87,8 @@ class Chain:
     self.atoms[ node_id ].neighbors.discard( node_id )
     # self.atoms[ node_id ].neighbors.remove[ node_id ]
   
+  ## Adds bond to chain
+  # This needs to be fixed, duplicate ID different chain issue
   def add_bond( self, bond ):
     node_ids = ( bond.nodes[ 0 ].idlabel, bond.nodes[ 1 ].idlabel )
     # Fix bond so same atom won't be added more than once
@@ -132,17 +156,43 @@ class Chain:
     
     return matches
   
-  ## Returns a list of seeds and keys
+  ## Returns list of bonds with specified magnitude
+  # @param d_r Max difference in magnitude for lookup
+  def find_length( self, magnitude, d_r = 1.0 ):
+    matches = []
+    #for bond in self.bonds:
+    #  if abs( bond.magnitude - magnitude ) <= d_r:
+    #    matches.append( bond )
+    #return matches
+    # Use list comprehension instead
+    
+  
+  ## Returns atom near specified position
+  # @param epsilon
+  def atom_at( self, position, epsilon = 1.0 ):
+    atom = None
+    #for 
+  
+  ## Returns a list of seeds and keys matching in all chains
   #
   def seed_key( chains, d_r = 1.0, d_theta = 1.0 ):
     matches = []
-    for bond_a in self.bonds:
-      # Look for bond magnitude in other chains
-      for chain in chains:
-        for bond_b in chain.bonds:
-          if has_mag( chains, bond_b.magnitude, d_r ):
-            #BOOKMARK 04292011
-          if abs( bond_a.magnitude - bond_b.magnitude ) <= d_r:
+    for seed in self.bonds:
+      if has_mag( chains, seed.mag, d_r ):
+        # Found a seed
+        for node in seed:
+          # The system may break here if connecting chains together
+          # due to duplicate IDs in different chains
+          for neighbor_id in node.neighbors:
+            key_ids = sorted ( [ node.idlabel, neighbor_id ], key=attrgetter('idlabel') )
+            key = bonds[ key_ids ]
+            if has_mag( chains, key.mag, d_r ):
+              pass
+              #Found key
+              # BOOKMARK
+      #else:
+      #  bond_a.
+
             # Found a seed with matching magnitude
             # Look through neighbors, these are connected bonds
             # If we can't find same magnitude in other chains then good
@@ -161,3 +211,4 @@ if __name__ == '__main__':
   my_bonds[ key ] = key
   print ( key ) in my_bonds
   print my_bonds[ key ]
+  y for y in ( 1, 2, 3, 4 ) if y > 2
