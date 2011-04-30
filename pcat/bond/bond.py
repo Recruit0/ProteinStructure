@@ -2,6 +2,7 @@
 # @TODO: needs full header
 
 from operator import itemgetter, attrgetter
+from visual import *
 
 # @author Alvin Fagan
 
@@ -9,6 +10,11 @@ class Bond:
   def __init__( self, node_a, node_b ):
     # Store list sorted by id so that one pair has one key
     self.nodes = sorted ( [ node_a, node_b ], key=attrgetter('idlabel') )
+    self.magnitude = mag( node_a - node_b )
+    # Marker so that this bond doesn't have to be looked for again
+    # while searching.
+    # MAKE SURE TO RESET TO FALSE IF CHANGED
+    self.not_found = False
     # Should not connect at this point, connecting requires having
     # a list of all the atoms, hence connecting should be handled by
     # the Chain class

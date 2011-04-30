@@ -5,6 +5,46 @@
 # @author W. Cole Davis
 
 from visual import * 
+import math
+
+## Returns if a list of chains has a magnitude with max d_r error
+#
+def has_mag( chains, mag, d_r = 1.0 ):
+  all_match = True
+  for chain in chains:
+    match_found = False
+    # Optimize this later to do binary search or something
+    for bond in chain.bonds:
+      if abs( bond.magnitude - mag ) <= d_r:
+        # Found a match
+        match_found = True
+        break
+    if not match_found:
+      # No match in one of the chains means no match in all
+      all_match = False
+      break
+  return all_match
+
+## Returns if list of chains have a specified atom with max epsilon
+## error in distance.
+# @param epsilon Max difference in position
+# @param position This must be a vpython vector
+def has_atom( chains, position, epsilon = 1.0 ):
+  all_match = True
+  for chain in chains:
+    match_found = False
+    # Optimize this later to do binary search or something
+    for atom in chain.atoms:
+      # Figure out how to make this a parameter
+      if mag2( atom - position ) <= epsilon**2:
+        # Found a match
+        match_found = True
+        break
+    if not match_found:
+      # No match in one of the chains means no match in all
+      all_match = False
+      break
+  return all_match
 
 class Chain:
   def __init__( self, name = '' ):
@@ -56,9 +96,9 @@ class Chain:
   # Order of tuples is self first then whatever order others were in
   # @param chains List of chains that this one will be compared to
   # @param epsilon Max error distance between points to be considered a match
-  def intersect( chains, epsilon = 1.0 ):
+  def intersect( self, chains, epsilon = 1.0 ):
     matches = []
-    for atom_a in self.atoms:
+    for atom in self.atoms:
       all_chains_match = True
       # List of atom ids that matched in the other chains
       matching_ids = []
@@ -71,6 +111,7 @@ class Chain:
         for atom_b in chain.atoms:
           # If there is a match then note it and stop looking
           # Use magnitude squared to avoid sqrt computations
+          # Magnitude in bond dictionary is only for same chain
           if mag2( atom_b - atom_a ) <= epsilon**2:
             match_exists = True
             matching_ids.append( atom_b.idlabel )
@@ -90,6 +131,26 @@ class Chain:
         matches.append( matching_ids )
     
     return matches
+  
+  ## Returns a list of seeds and keys
+  #
+  def seed_key( chains, d_r = 1.0, d_theta = 1.0 ):
+    matches = []
+    for bond_a in self.bonds:
+      # Look for bond magnitude in other chains
+      for chain in chains:
+        for bond_b in chain.bonds:
+          if has_mag( chains, bond_b.magnitude, d_r ):
+            #BOOKMARK 04292011
+          if abs( bond_a.magnitude - bond_b.magnitude ) <= d_r:
+            # Found a seed with matching magnitude
+            # Look through neighbors, these are connected bonds
+            # If we can't find same magnitude in other chains then good
+            # This will throw out a lot of mismatches
+            # An angle requires 3 nodes/2 bonds, use as pruning function
+            # Neighbors does not point outside chain so can always
+            # lookup magnitude in bond dictionary of chain
+            
 
 if __name__ == '__main__':
   my_nodes = [ 'CD12', 'AB12' ]
