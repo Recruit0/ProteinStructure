@@ -159,19 +159,24 @@ class Chain:
   ## Returns list of bonds with specified magnitude
   # @param d_r Max difference in magnitude for lookup
   def find_length( self, magnitude, d_r = 1.0 ):
-    matches = []
+    #matches = []
     #for bond in self.bonds:
     #  if abs( bond.magnitude - magnitude ) <= d_r:
     #    matches.append( bond )
     #return matches
     # Use list comprehension instead
-    
+    return [bond for bond in self.bonds if abs( bond.magnitude - magnitude ) <= d_r]
   
-  ## Returns atom near specified position
-  # @param epsilon
+  ## Returns first atom found near specified position, otherwise None
+  # @param epsilon Max error distance from position
   def atom_at( self, position, epsilon = 1.0 ):
-    atom = None
-    #for 
+    found_atom = None
+    for atom in self.atoms:
+      # Use magnitude squared to avoid square root ops
+      if mag2( atom - position ) <= epsilon**2:
+        found_atom = atom
+        break
+    return found_atom
   
   ## Returns a list of seeds and keys matching in all chains
   #
@@ -211,4 +216,5 @@ if __name__ == '__main__':
   my_bonds[ key ] = key
   print ( key ) in my_bonds
   print my_bonds[ key ]
-  y for y in ( 1, 2, 3, 4 ) if y > 2
+  # Using list comprehension
+  print [x for x in range(0,10) if x > 5]
