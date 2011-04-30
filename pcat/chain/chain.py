@@ -178,6 +178,30 @@ class Chain:
         break
     return found_atom
   
+  ## Returns angle between seed and key or None if pair doesn't connect
+  ## Both seed and key are bonds
+  def sk_angle( self, seed, key ):
+    angle = None
+    origin = None
+    joint = None
+    end = None
+    for seed_node in seed.nodes:
+      if node.idlabel == key[ 0 ].idlabel:
+        joint = node
+        end = key[ 1 ]
+      # Else other way around
+      else:
+        origin = node
+        end = key[ 0 ]
+        
+    for node in seed.nodes:
+      if node is not joint:
+        
+    if joint is not None:
+      if origin is not None:
+        v1 = joint - origin
+        v2 = 
+  
   ## Returns a list of seeds and keys matching in all chains
   #
   def seed_key( chains, d_r = 1.0, d_theta = 1.0 ):
