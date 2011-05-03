@@ -5,7 +5,7 @@
 
 from sets import Set
 # Not available on dell blades
-#from visual import *
+from visual import *
 import numpy
 import math
 
@@ -18,14 +18,15 @@ class Node( vector ):
     # Use vpython's vector class
     # Although a vector is an ordered pair of points I'm using it this
     # way due to time constraints
+    super( Node, self ).__init__( x, y, z )
     # vpython not available
-    self.position = array( x, y, z )
+    #self.position = array( x, y, z )
     # Tries to prevent from pointing to atoms not in the atoms
     # dictionary of the chain but this might be too strict
     self.neighbors = Set() if neighbors is None else neighbors
   
-  def rotate( self, theta, vector ):
-    m_rot = 
+  ##def rotate( self, theta, vector ):
+    ##m_rot = 
   
   # Any connecting should be encapsulated within Chain class for safety
 
