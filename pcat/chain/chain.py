@@ -118,7 +118,7 @@ class Chain:
       all_chains_match = True
       # List of atom ids that matched in the other chains
       # Make sure to add my_atom so it is in the results too
-      matching_ids = [ my_atom ]
+      matching_ids = [ my_atom.idlabel ]
       # Construct list of ids of matching atoms in other chains
       for chain in chains:
         # Check if chain has atom in same position
@@ -135,6 +135,12 @@ class Chain:
         matches.append( matching_ids )
     return matches
   
+  ## Resets not_found flag for all bonds to false
+  #
+  def reset_not_found( self ):
+    for bond in self.bonds:
+      bond.not_found = False
+  
   ## Returns a list of bonds with specified length/magnitude.
   # @param d_r Max difference in magnitude for match
   def find_length( self, magnitude, d_r = 1.0 ):
@@ -150,7 +156,6 @@ class Chain:
   # Both seed and key are bonds
   # @TODO Remove returning None safety for faster execution
   def sk_angle( self, seed, key ):
-    angle = None
     # Vertice called the origin because it will be moved there during
     # seed-key alignment
     origin = None
@@ -183,10 +188,73 @@ class Chain:
     # Return None if seed-key pair does not connect
     return None
   
+  ## Generates list of neighboring bonds for specified bond
+  # @param Bond to get neighbors for
+  # @TODO Use self reference only constraint
+  def get_neighbors( self, bond ):
+    neighbors = []
+    for node in bond.nodes:
+      # This part uses self reference only constraint
+      for neighbor_id in node.neighbors:
+        bond_key = sorted ( [ node.idlabel, neighbor_id ] )
+        neighbors.append( self.bonds[ bond_key ] )
+    return neighbors
+  
+  ## Aligns chain so that SKP is in XY plane with seed on x-axis
+  ## No result if seed and key are not connected
+  #
+  def align( self, seed, key ):
+    # Vertice called the origin because it will be moved there during
+    # seed-key alignment
+    origin = None
+    joint = None
+    end = None
+    # Find the joint and set origin accordingly
+    # Duplicate node ID issue not resolved
+    # Design to restrict node access to self only
+    for seed_node in seed.nodes:
+      for key_node in key.nodes:
+        if seed_node.idlabel == key_node.idlabel:
+          joint = seed_node
+        else:
+          origin = seed_node
+    
+    # Set end node
+    for key_node in key.nodes:
+      if key_node.idlabel != joint.idlabel:
+        # Self access restriction only not implemented yet
+        end = key_node
+    
+    # All vertices must be defined
+    if origin is not None and joint is not None and end is not None:
+      # Move chain so that vertice "origin" is the origin
+      self.translate( -1.0 * origin )
+      # Vector from origin to join
+      v1 = joint - origin
+      # Vector from joint to end
+      v2 = end - joint
+      # Orthographic projection into ZY plane, i.e. ignore x
+      # Then take angle in this plane
+      x_angle = atan2( v1.z, v1.y )
+      # Rotate around x-axis so seed lines up with y axis when looking
+      # down at x-axis.
+      # Seed will be in XY plane
+      self.rotate( -x_angle, vector( 1, 0, 0 ) )
+      # Rotate around z-axis so seed lines up with x axis
+      z_angle = atan2( v1.y, v1.x )
+      self.rotate( -z_angle, vector( 0, 0, 1 ) )
+      # Ortho project key into ZY plane, i.e. ignore x
+      # Look down at X axis, this is ZY plane
+      # Rotate so that key lines up with Y axis
+      x2_angle = atan2( v2.z, v2.y )
+      # Key will be in XY plane
+      self.rotate( -x2_angle, vector( 1, 0, 0 ) )
+  
   ## Returns a list of seeds and keys matching in all chains
   # @param d_r Max difference in magnitude
   # @param d_theta Max difference in angle
   def seed_key( self, chains, d_r = 1.0, d_theta = 1.0 ):
+    # Not enough time to code for every combination of SKP
     # Seed-key pair (SKP) list
     # 2 dimensions: chain then SKPs of that chain
     skp_list = []
