@@ -10,6 +10,7 @@ class Bond:
   def __init__( self, node_a, node_b ):
     # Store list sorted by id so that one pair has one key
     self.nodes = sorted ( [ node_a, node_b ], key=attrgetter('idlabel') )
+    # Assumes node_a and node_b inherit vector functionality
     self.magnitude = mag( node_a - node_b )
     # Marker so that this bond doesn't have to be looked for again
     # while searching.

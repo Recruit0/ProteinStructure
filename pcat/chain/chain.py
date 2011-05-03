@@ -28,27 +28,7 @@ def has_mag( chains, mag, d_r = 1.0 ):
 
 ## Returns if list of chains have a specified atom with max epsilon
 ## error in distance.
-# @param epsilon Max difference in position
-# @param position This must be a vpython vector
-def has_atom( chains, position, epsilon = 1.0 ):
-  all_match = True
-  for chain in chains:
-    match_found = False
-    # Optimize this later to do binary search or something
-    for atom in chain.atoms:
-      # Figure out how to make this a parameter
-      if mag2( atom - position ) <= epsilon**2:
-        # Found a match
-        match_found = True
-        break
-    if not match_found:
-      # No match in one of the chains means no match in all
-      all_match = False
-      break
-  return all_match
-
-## Returns if list of chains have a specified atom with max epsilon
-## error in distance.
+# Obselete?
 # @param epsilon Max difference in position
 # @param position This must be a vpython vector
 def has_atom( chains, position, epsilon = 1.0 ):
@@ -107,57 +87,56 @@ class Chain:
   
   # Rotates whole chain in space about a 3d axis
   def rotate( self, theta, vector ):
-    for atom in self.atoms:
-      atom.rotate( theta, vector )
+    for my_atom in self.atoms:
+      my_atom.rotate( theta, vector )
   
   # Translates whole chain in space
   def translate( self, vector ):
-    for atom in self.atoms:
-      atom += vector
+    for my_atom in self.atoms:
+      my_atom += vector
   
-  ## Returns a list of all the atoms the chains have in common
-  # MAYBE this should be a separate function on its own?
-  # Order of tuples is self first then whatever order others were in
-  # @param chains List of chains that this one will be compared to
+  ## Returns first atom found near specified position, otherwise None
+  # @param epsilon Max error distance from position
+  # Upgrade: Use BSP or something
+  def atom_at( self, position, epsilon = 1.0 ):
+    found_atom = None
+    for my_atom in self.atoms:
+      # Use magnitude squared to avoid square root ops
+      if mag2( my_atom - position ) <= epsilon**2:
+        found_atom = my_atom
+        break
+    return found_atom
+  
+  ## Find atoms that are in the same position in all chains and returns
+  ## a list of their IDs. Order is self first then whatever order other
+  ## chains were in.
+  # @param chains List of chains to intersect with this one
   # @param epsilon Max error distance between points to be considered a match
   def intersect( self, chains, epsilon = 1.0 ):
     matches = []
-    for atom in self.atoms:
+    for my_atom in self.atoms:
       all_chains_match = True
       # List of atom ids that matched in the other chains
-      matching_ids = []
-      
+      # Make sure to add my_atom so it is in the results too
+      matching_ids = [ my_atom ]
+      # Construct list of ids of matching atoms in other chains
       for chain in chains:
-        # Assume there is no match until one is found
-        match_exists = False
-        
-        # Look through all atoms
-        for atom_b in chain.atoms:
-          # If there is a match then note it and stop looking
-          # Use magnitude squared to avoid sqrt computations
-          # Magnitude in bond dictionary is only for same chain
-          if mag2( atom_b - atom_a ) <= epsilon**2:
-            match_exists = True
-            matching_ids.append( atom_b.idlabel )
-            break
-            
-        # If there was not a match in one of the chains
-        # then ignore atom_a
-        if not match_exists:
+        # Check if chain has atom in same position
+        matching_atom = chain.atom_at( my_atom, epsilon )
+        if matching_atom is not None:
+          # Found a match
+          matching_ids.append( matching_atom.idlabel )
+        else:
+          # One of the chains does not match for this atom
           all_chains_match = False
           break
-      
-      # If at least one of the chains didn't match then ignore atom_a
-      if not all_chains_match:
-        break
-      # Otherwise we found a match
-      else:
+      # If a match was found in all chains then add it to results
+      if all_chains_match:
         matches.append( matching_ids )
-    
     return matches
   
-  ## Returns list of bonds with specified magnitude
-  # @param d_r Max difference in magnitude for lookup
+  ## Returns a list of bonds with specified length/magnitude.
+  # @param d_r Max difference in magnitude for match
   def find_length( self, magnitude, d_r = 1.0 ):
     #matches = []
     #for bond in self.bonds:
@@ -167,46 +146,70 @@ class Chain:
     # Use list comprehension instead
     return [bond for bond in self.bonds if abs( bond.magnitude - magnitude ) <= d_r]
   
-  ## Returns first atom found near specified position, otherwise None
-  # @param epsilon Max error distance from position
-  def atom_at( self, position, epsilon = 1.0 ):
-    found_atom = None
-    for atom in self.atoms:
-      # Use magnitude squared to avoid square root ops
-      if mag2( atom - position ) <= epsilon**2:
-        found_atom = atom
-        break
-    return found_atom
-  
-  ## Returns angle between seed and key or None if pair doesn't connect
-  ## Both seed and key are bonds
+  ## Returns angle between seed and key or None if not a seed-key pair
+  # Both seed and key are bonds
+  # @TODO Remove returning None safety for faster execution
   def sk_angle( self, seed, key ):
     angle = None
+    # Vertice called the origin because it will be moved there during
+    # seed-key alignment
     origin = None
     joint = None
     end = None
+    # Find the joint and set origin accordingly
+    # Duplicate node ID issue not resolved
+    # Design to restrict node access to self only
     for seed_node in seed.nodes:
-      if node.idlabel == key[ 0 ].idlabel:
-        joint = node
-        end = key[ 1 ]
-      # Else other way around
-      else:
-        origin = node
-        end = key[ 0 ]
-        
-    for node in seed.nodes:
-      if node is not joint:
-        
-    if joint is not None:
-      if origin is not None:
-        v1 = joint - origin
-        v2 = 
+      for key_node in key.nodes:
+        if seed_node.idlabel == key_node.idlabel:
+          joint = seed_node
+        else:
+          origin = seed_node
+    
+    # Set end node
+    for key_node in key.nodes:
+      if key_node.idlabel != joint.idlabel:
+        # Self access restriction only not implemented yet
+        end = key_node
+    
+    # All vertices must be defined
+    if origin is not None and joint is not None and end is not None:
+      # Vector from joint to origin
+      v1 = origin - joint
+      # Vector from joint to end
+      v2 = end - joint
+      # Inner angle between v1 and v2
+      return v1.diff_angle( v2 )
+    # Return None if seed-key pair does not connect
+    return None
   
   ## Returns a list of seeds and keys matching in all chains
-  #
-  def seed_key( chains, d_r = 1.0, d_theta = 1.0 ):
-    matches = []
-    for seed in self.bonds:
+  # @param d_r Max difference in magnitude
+  # @param d_theta Max difference in angle
+  def seed_key( self, chains, d_r = 1.0, d_theta = 1.0 ):
+    # Seed-key pair (SKP) list
+    # 2 dimensions: chain then SKPs of that chain
+    skp_list = []
+    for my_seed in self.bonds:
+      all_chains_match = True
+      # List of lists containing matching seeds from other chains
+      # Sub-lists are in same order as other chains
+      other_seeds = []
+      for chain in chains:
+        # Construct list of matching seeds for this chain
+        chain_seeds = chain.find_length( my_seed.magnitude, d_r )
+        if len( chain_seeds ) > 0:
+          # Found match(es)
+          other_seeds.append( chain_seeds )
+        else:
+          # No match(es)
+          all_chains_match = False
+          break
+      if all_chains_match:
+        # Add this seed to SKP list
+        skp_list.append( other_seeds )
+          
+      
       if has_mag( chains, seed.mag, d_r ):
         # Found a seed
         for node in seed:
