@@ -200,6 +200,32 @@ class Chain:
         neighbors.append( self.bonds[ bond_key ] )
     return neighbors
   
+  ## Finds neighbors of bond with specified length
+  # @param d_r Max difference in length
+  def find_neighbors( self, bond, length, d_r ):
+    neighbors = []
+    for node in bond.nodes:
+      # This part uses self reference only constraint
+      for neighbor_id in node.neighbors:
+        bond_key = sorted ( [ node.idlabel, neighbor_id ] )
+        neighboring_bond = self.bonds[ bond_key ]
+        if abs( neighboring_bond - length ) <= d_r:
+          neighbors.append( self.bonds[ bond_key ] )
+    return neighbors
+  
+  ## Returns list of matching SKPs in this chain
+  # @param d_r Max difference in magnitude
+  # @param d_theta Max difference in angle
+  def match_skp( self, seed, key, d_r = 1.0, d_theta = 1.0 ):
+    matching_skps = []
+    # Function sk_angle does not have self access only safety
+    theta_1 = self.sk_angle( seed, key )
+    matching_seeds = self.find_length( seed.magnitude, d_r )
+    for potential_seed in matching_seeds:
+      matching_keys = self.find_neighbors( potential_seed, key.magnitude, d_r )
+      for potential_key in matching_keys:
+        
+  
   ## Aligns chain so that SKP is in XY plane with seed on x-axis
   ## No result if seed and key are not connected
   #
@@ -229,7 +255,8 @@ class Chain:
     if origin is not None and joint is not None and end is not None:
       # Move chain so that vertice "origin" is the origin
       self.translate( -1.0 * origin )
-      # Vector from origin to join
+      # Vector from origin to joint
+      # Subtracting the origin is mostly for illustration purposes
       v1 = joint - origin
       # Vector from joint to end
       v2 = end - joint
@@ -252,55 +279,82 @@ class Chain:
   
   ## Returns a list of seeds and keys matching in all chains
   # @param d_r Max difference in magnitude
-  # @param d_theta Max difference in angle
+  # @param d_theta Max difference in angle, in radians. There is a
+  # degrees to radians helper function from vpython.
   def seed_key( self, chains, d_r = 1.0, d_theta = 1.0 ):
     # Not enough time to code for every combination of SKP
     # Seed-key pair (SKP) list
     # 2 dimensions: chain then SKPs of that chain
     skp_list = []
     for my_seed in self.bonds:
-      all_chains_match = True
-      # List of lists containing matching seeds from other chains
+      seed_missing = False
+      # List of lists containing matching SKPs
       # Sub-lists are in same order as other chains
-      other_seeds = []
-      for chain in chains:
-        # Construct list of matching seeds for this chain
-        chain_seeds = chain.find_length( my_seed.magnitude, d_r )
-        if len( chain_seeds ) > 0:
-          # Found match(es)
-          other_seeds.append( chain_seeds )
-        else:
-          # No match(es)
-          all_chains_match = False
-          break
-      if all_chains_match:
-        # Add this seed to SKP list
-        skp_list.append( other_seeds )
-          
-      
-      if has_mag( chains, seed.mag, d_r ):
-        # Found a seed
-        for node in seed:
-          # The system may break here if connecting chains together
-          # due to duplicate IDs in different chains
-          for neighbor_id in node.neighbors:
-            key_ids = sorted ( [ node.idlabel, neighbor_id ], key=attrgetter('idlabel') )
-            key = bonds[ key_ids ]
-            if has_mag( chains, key.mag, d_r ):
-              pass
-              #Found key
-              # BOOKMARK
-      #else:
-      #  bond_a.
+      match = []
+      # Try to find key(s) for this seed
+      for my_key in self.get_neighbors( my_seed ):
+        key_missing = False
+        my_skp = [ my_seed, my_key ]
+        theta_1 = self.sk_angle( my_seed, my_key )
+        # Generate list of SKPs
+        skps = [ my_skp ]
+        for other_chain in chains:
+          # Construct list of matching seed(s) for this chain
+          matching_seeds = other_chain.find_length( my_seed.magnitude, d_r )
+          if len( matching_seeds ) > 0:
+            # Found potential seed(s)
+            for potential_seed in matching_seeds:
+              matching_keys = other_chain.find_neighbors( potential_seed, my_key.magnitude, d_r )
+              if len( matching_keys ) > 0:
+                # Found potential key(s)
+                angle_found = False
+                for potential_key in matching_keys:
+                  # Look for matching angle
+                  # theta_1 set at top loop near my_key before SKPs list
+                  theta_2 = other_chain.sk_angle( potential_seed, potential_key )
+                  if abs( theta_1 - theta_2 ) <= d_theta:
+                    # Found SKP
+                    angle_found = True
+                    skps.append( potential_seed, potential_key )
+                    break
+                if not angle_found:
+                  key_missing = True
+                  break
+              else:
+                # No matching key(s)
+                key_missing = True
+                break
+              if not key_missing:
+                match.append( skps )
+              else:
+                break
 
-            # Found a seed with matching magnitude
-            # Look through neighbors, these are connected bonds
-            # If we can't find same magnitude in other chains then good
-            # This will throw out a lot of mismatches
-            # An angle requires 3 nodes/2 bonds, use as pruning function
-            # Neighbors does not point outside chain so can always
-            # lookup magnitude in bond dictionary of chain
-            
+
+              for potential_key in matching_keys:
+              potential_keys = other_chain.get_neighbors( potential_seed )
+              # Look for matching key
+              for potential_key in potential_keys:
+                if abs( potential_key.magnitude - my_key.magnitude ) <= d_r:
+                  # Potential key matches length, now check angle
+                  theta_1 = self.sk_angle( my_seed, my_key )
+                  theta_2 = other_chain.sk_angle( potential_seed, potential_key )
+                  if abs( theta_1 - theta_2 ) <= d_theta:
+                    # Their angles are within d_theta, found matching
+                    # key, hence matching SKP
+                    skps.append( potential_seed, potential_key )
+                    break
+              if
+          else:
+            # No matching seed(s)
+            seed_missing = True
+            break
+        if not seed_missing:
+          # Add this seed to SKP list
+          skp_list.append( other_seeds )
+        else:
+          # A seed is missing for a chain so move on to next key
+          break
+    return skp_list
 
 if __name__ == '__main__':
   my_nodes = [ 'CD12', 'AB12' ]
