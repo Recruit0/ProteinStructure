@@ -97,7 +97,7 @@ class Chain:
   
   ## Returns first atom found near specified position, otherwise None
   # @param epsilon Max error distance from position
-  # Upgrade: Use BSP or something
+  # @TODO Use BSP or something
   def atom_at( self, position, epsilon = 1.0 ):
     found_atom = None
     for my_atom in self.atoms:
@@ -115,7 +115,7 @@ class Chain:
   def intersect( self, chains, epsilon = 1.0 ):
     matches = []
     for my_atom in self.atoms:
-      all_chains_match = True
+      missing_atom = False
       # List of atom ids that matched in the other chains
       # Make sure to add my_atom so it is in the results too
       matching_ids = [ my_atom.idlabel ]
@@ -128,10 +128,10 @@ class Chain:
           matching_ids.append( matching_atom.idlabel )
         else:
           # One of the chains does not match for this atom
-          all_chains_match = False
+          missing_atom = True
           break
       # If a match was found in all chains then add it to results
-      if all_chains_match:
+      if not missing_atom:
         matches.append( matching_ids )
     return matches
   
