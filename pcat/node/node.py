@@ -25,8 +25,12 @@ class Node( vector ):
     # dictionary of the chain but this might be too strict
     self.neighbors = Set() if neighbors is None else neighbors
   
-  ##def rotate( self, theta, vector ):
-    ##m_rot = 
+  ## Apparently rotate function does not change vector
+  # @TODO Use pickling instead of for loop for deep copy
+  def rotate_with( self, theta, vector ):
+    self_rotated = self.rotate( theta, vector )
+    for x_i in range( 0, 3 ):
+      self[ x_i ] = self_rotated[ x_i ]
   
   # Any connecting should be encapsulated within Chain class for safety
 

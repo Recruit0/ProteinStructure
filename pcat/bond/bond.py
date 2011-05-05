@@ -22,6 +22,36 @@ class Bond:
     # self.node_a.connect( node_b )
 
 if __name__ == '__main__':
+  import sys
+  sys.path.append( "../" )
+  from node.node import Node
+  import math
+  my_node = Node( 'AB12', -1.0, 2.0, 3.0 )
+  print my_node, ' ', id(my_node)
+  my_node.rotate_with( pi/2, (0, 0, 1) )
+  print my_node, ' ', id(my_node)
+  negative_node = my_node
+  negative_node *= -1
+  # Plus equals does not create new object, check
+  my_node += negative_node
+  print my_node, ' ', id( my_node ), ' ', type( my_node )
+  
+  # Use 1 rotation to rotate into x axis
+  diff_angle = negative_node.diff_angle( (1, 0, 0) )
+  normal = negative_node.cross( (1, 0, 0) )
+  negative_node.rotate_with( diff_angle, normal )
+  print diff_angle, '\n', normal, '\n', negative_node
+  
+  # Rotate into xy plane with 2 rotations
+  if False:
+    x_angle = atan2( negative_node.z, negative_node.y )
+    negative_node.rotate_with( -x_angle, (1, 0, 0) )
+    print negative_node
+    z_angle = atan2( negative_node.y, negative_node.x )
+    negative_node.rotate_with( -z_angle, vector( 0, 0, 1 ) )
+    print negative_node
+
+if False:
   class Point:
     def __init__( self, idlabel = '', x = 0.0, y = 0.0 ):
       self.idlabel = idlabel

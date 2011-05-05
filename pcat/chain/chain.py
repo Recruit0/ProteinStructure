@@ -8,46 +8,6 @@ from visual import *
 import math
 from operator import itemgetter, attrgetter
 
-## Returns if a list of chains has a magnitude with max d_r error
-# Obselete?
-def has_mag( chains, mag, d_r = 1.0 ):
-  all_match = True
-  for chain in chains:
-    match_found = False
-    # Optimize this later to do binary search or something
-    for bond in chain.bonds:
-      if abs( bond.magnitude - mag ) <= d_r:
-        # Found a match
-        match_found = True
-        break
-    if not match_found:
-      # No match in one of the chains means no match in all
-      all_match = False
-      break
-  return all_match
-
-## Returns if list of chains have a specified atom with max epsilon
-## error in distance.
-# Obselete?
-# @param epsilon Max difference in position
-# @param position This must be a vpython vector
-def has_atom( chains, position, epsilon = 1.0 ):
-  all_match = True
-  for chain in chains:
-    match_found = False
-    # Optimize this later to do binary search or something
-    for atom in chain.atoms:
-      # Figure out how to make this a parameter
-      if mag2( atom - position ) <= epsilon**2:
-        # Found a match
-        match_found = True
-        break
-    if not match_found:
-      # No match in one of the chains means no match in all
-      all_match = False
-      break
-  return all_match
-
 class Chain:
   def __init__( self, name = '' ):
     self.name = name
@@ -88,7 +48,8 @@ class Chain:
   # Rotates whole chain in space about a 3d axis
   def rotate( self, theta, vector ):
     for my_atom in self.atoms:
-      my_atom.rotate( theta, vector )
+      # Apparently rotate function does not change vector
+      my_atom.rotate_with( theta, vector )
   
   # Translates whole chain in space
   def translate( self, vector ):
@@ -258,6 +219,7 @@ class Chain:
         end = key_node
     
     # All vertices must be defined
+    # May be better to line up with 1st chain rather than origin
     if origin is not None and joint is not None and end is not None:
       # Move chain so that vertice "origin" is the origin
       self.translate( -1.0 * origin )
@@ -266,16 +228,11 @@ class Chain:
       v1 = joint - origin
       # Vector from joint to end
       v2 = end - joint
-      # Orthographic projection into ZY plane, i.e. ignore x
-      # Then take angle in this plane
-      x_angle = atan2( v1.z, v1.y )
-      # Rotate around x-axis so seed lines up with y axis when looking
-      # down at x-axis.
-      # Seed will be in XY plane
-      self.rotate( -x_angle, vector( 1, 0, 0 ) )
-      # Rotate around z-axis so seed lines up with x axis
-      z_angle = atan2( v1.y, v1.x )
-      self.rotate( -z_angle, vector( 0, 0, 1 ) )
+      # Rotate seed to x-axis
+      diff_angle = v1.diff_angle( (1, 0, 0) )
+      normal = v1.cross( (1, 0, 0) )
+      self.rotate( diff_angle, normal )
+      # Could use this technique elsewhere
       # Ortho project key into ZY plane, i.e. ignore x
       # Look down at X axis, this is ZY plane
       # Rotate so that key lines up with Y axis
